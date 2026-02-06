@@ -145,6 +145,10 @@ def create_app(config: AppConfig) -> Flask:
     def index() -> str:
         return render_template_string(HTML_TEMPLATE)
 
+    @app.get("/favicon.ico")
+    def favicon() -> tuple[str, int]:
+        return "", 204
+
     @app.post("/api/chat")
     def chat() -> Dict[str, Any]:
         payload = request.get_json(silent=True) or {}
