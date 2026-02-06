@@ -29,13 +29,18 @@ HTML_TEMPLATE = """
       height: 100vh;
     }
     header {
-      padding: 16px 24px;
+      padding: 16px 24px 12px;
       border-bottom: 1px solid #1e222a;
       background: #12151b;
     }
     .title {
       font-size: 18px;
       font-weight: 600;
+    }
+    .status {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #9aa4b2;
     }
     .chat {
       flex: 1;
@@ -89,6 +94,7 @@ HTML_TEMPLATE = """
 <body>
   <header>
     <div class="title">OpenClaw Local</div>
+    <div class="status" id="status">Checking Ollama status...</div>
   </header>
   <div id="chat" class="chat"></div>
   <form id="composer" class="composer">
@@ -97,6 +103,7 @@ HTML_TEMPLATE = """
   </form>
   <script>
     const chat = document.getElementById('chat');
+    const status = document.getElementById('status');
     const form = document.getElementById('composer');
     const prompt = document.getElementById('prompt');
     const sendBtn = document.getElementById('send');
@@ -108,6 +115,23 @@ HTML_TEMPLATE = """
       chat.appendChild(bubble);
       chat.scrollTop = chat.scrollHeight;
     };
+
+    const loadStatus = async () => {
+      try {
+        const response = await fetch('/api/status');
+        const data = await response.json();
+        if (data.ok) {
+          const models = data.models.length ? data.models.join(', ') : 'No models found';
+          status.textContent = `Ollama: connected • Models: ${models}`;
+        } else {
+          status.textContent = `Ollama: unavailable • ${data.error}`;
+        }
+      } catch (err) {
+        status.textContent = `Ollama: unavailable • ${err.message}`;
+      }
+    };
+
+    loadStatus();
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -148,6 +172,10 @@ def create_app(config: AppConfig) -> Flask:
     @app.get("/favicon.ico")
     def favicon() -> tuple[str, int]:
         return "", 204
+
+    @app.get("/api/status")
+    def status() -> Dict[str, Any]:
+        return jsonify(agent.status())
 
     @app.post("/api/chat")
     def chat() -> Dict[str, Any]:

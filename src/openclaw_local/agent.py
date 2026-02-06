@@ -65,3 +65,6 @@ class OpenClawAgent:
             return follow_up["message"]["content"]
         self._messages.append({"role": "assistant", "content": content})
         return content
+
+    def status(self) -> Dict[str, Any]:
+        return self._client.status()
